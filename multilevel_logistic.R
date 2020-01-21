@@ -23,16 +23,15 @@ int <-
 cond <- 
 
 #### set up random effects
-int_re <- 
-
-
+j_int <- 
+a_int <- 
 
 
 # random intercept model
-glmer(pos_result <- cond + (1|journal), data = , family = binomial)
+glmer(pos_result <- cond + (1|journal/article), data = , family = binomial)
 
 
 
 
 # random slopes model
-glmer(pos_result <- cond + (cond|journal), data = , family = binomial)
+glmer(pos_result <- cond + (1 + cond|journal/article), data = , family = binomial)
