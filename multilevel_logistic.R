@@ -1,14 +1,9 @@
 
 #### set up basic sample size parameters 
 
-# number of journals
-J <- 15
-
-# number of articles per journal (starting with fixed number - assuming 10 eligible per journal & 60% opt-in rate)
-a <- 6
-
-# dropout rate, 0 - 10% 
-do_rate <- 0
+J <- 15  ## number of journals
+a <- 6 ## number of articles per journal (starting with fixed number - assuming 10 eligible per journal & 60% opt-in rate)
+do_rate <- 0 # dropout rate, 0 - 10% 
 
 
 
@@ -34,4 +29,4 @@ glmer(pos_result <- cond + (1|journal/article), data = , family = binomial)
 
 
 # random slopes model
-glmer(pos_result <- cond + (1 + cond|journal/article), data = , family = binomial)
+glmer(pos_result <- cond + (cond|journal/article), data = , family = binomial)
