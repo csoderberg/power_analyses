@@ -1,38 +1,44 @@
+library(tidyverse)
+library(lme4)
 
 #### set up basic sample size parameters 
-
-J <- 15  ## number of journals
-a <- 6 ## number of articles per journal (starting with fixed number - assuming 10 eligible per journal & 60% opt-in rate)
+J <- 30  ## number of journals
+a <- rep(30, J) ## number of articles per journal (starting with fixed number - assuming 10 eligible per journal & 60% opt-in rate)
 do_rate <- 0 # dropout rate, 0 - 10% 
 
-#### generate datastructure
-cond <- rep(c('a', 'b'), (J*a)/2)
-
-data <- cbind(cond, 
-      crossing(journals = seq(1, J, 1), 
-               articles = seq(1, a, 1)))
-
-# base rate of negative findings
-
-### 10 - 15% based on Fanelli (2010) graph 
-
-### rate in RR: 55% in novel studies, 66% in replications (https://www.nature.com/articles/d41586-018-07118-1#ref-CR3)
-
+nsims <- 1
+p_values <- rep(NA, nsims)
+for (i in 1:nsims) {
+  #### generate datastructure
+  baselines <- rnorm(mean = .125, sd = .04, n = J)
+  RRs <- rnorm(mean = .5, sd = .1, n = J)
   
-#### set up fixed effects
-int <- 
-cond <- 
+  article_count <- 0
+  journal_data <- NULL
+  
+  for (j in 1:J) {
+    
+    # get responses
+    resp_control <- rbinom((a[j])/2, 1, baselines[j])
+    resp_RR <- rbinom((a[j])/2, 1, RRs[j])
+    
+    resp <- c(resp_control, resp_RR)
+    
+    # get conditions
+    cond_control <- rep(0, (a[j])/2)
+    cond_RR  <- rep(1, (a[j])/2)
+    
+    cond <- c(cond_control, cond_RR)
+    
+    journal <- rep(j, a[j])
+    article <- seq(article_count + 1, article_count + a[j])
+    
+    article_count <- article_count + a[j]
+    
+    journal_data <- bind_rows(journal_data, as_tibble(cbind(resp, cond, journal, article)))
+  }
+  model_fit <- summary(glmer(resp ~ cond + (cond|journal), family = binomial, data = journal_data))
+  
+  p_values[i] <- model_fit$coefficients[2,4]
+}
 
-#### set up random effects
-j_int <- 
-a_int <- 
-
-
-# random intercept model
-glmer(pos_result <- cond + (1|journal/article), data = , family = binomial)
-
-
-
-
-# random slopes model
-glmer(pos_result <- cond + (cond|journal/article), data = , family = binomial)
