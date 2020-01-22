@@ -1,6 +1,7 @@
 library(tidyverse)
 library(lme4)
 library(sjPlot)
+library(truncnorm)
 
 
 glmm_power_sim <- function(J, a_per, nsims, mean1, mean2, sd1, sd2) {
@@ -13,8 +14,8 @@ glmm_power_sim <- function(J, a_per, nsims, mean1, mean2, sd1, sd2) {
   for (i in 1:nsims) {
     print(i)
     #### generate datastructure
-    baselines <- rnorm(mean = mean1, sd = sd1, n = J)
-    RRs <- rnorm(mean = mean2, sd = sd2, n = J)
+    baselines <- rtruncnorm(mean = mean1, sd = sd1, n = J, a = 0, b = 1)
+    RRs <- rtruncnorm(mean = mean2, sd = sd2, n = J,  a = 0, b = 1)
     
     article_count <- 0
     journal_data <- NULL
@@ -44,9 +45,11 @@ glmm_power_sim <- function(J, a_per, nsims, mean1, mean2, sd1, sd2) {
     
     p_values[i] <- model_fit$coefficients[2,4]
   }
+  power <- sum(p_values <= .05)/nsims
+  return(power)
 }
 
-
+test <- glmm_power_sim(15, 30, 100, .15, .3, .04, .1)
 
 
 
