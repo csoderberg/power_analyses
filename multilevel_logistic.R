@@ -7,6 +7,7 @@ library(truncnorm)
 glmm_power_sim <- function(J, a_per, nsims, mean1, mean2, sd1, sd2) {
   
   p_values <- cbind(rep(NA, nsims), rep(NA, nsims), rep(NA, nsims))
+  singularity <- cbind(rep(NA, nsims), rep(NA, nsims))
   
   #### set up basic sample size parameters 
   a <- rep(a_per, J) ## number of articles per journal (starting with fixed number - assuming 10 eligible per journal & 60% opt-in rate)
@@ -42,22 +43,25 @@ glmm_power_sim <- function(J, a_per, nsims, mean1, mean2, sd1, sd2) {
       journal_data <- bind_rows(journal_data, as_tibble(cbind(resp, cond, journal, article)))
     }
     
-    fe_model_fit <- summary(glm(resp ~ cond, family = binomial, data = journal_data))
-    re_int_model_fit <- summary(glmer(resp ~ cond + (1|journal), family = binomial, data = journal_data), control = glmerControl(optimizer="bobyqa", optCtrl = list(maxfun = 100000)))
-    re_slope_model_fit <- summary(glmer(resp ~ cond + (cond|journal), family = binomial, data = journal_data), control = glmerControl(optimizer="bobyqa", optCtrl = list(maxfun = 100000)))
+    fe_model <- glm(resp ~ cond, family = binomial, data = journal_data)
+    re_int_model <- glmer(resp ~ cond + (1|journal), family = binomial, data = journal_data, control = glmerControl(optimizer="bobyqa", optCtrl = list(maxfun = 100000))) 
+    re_slope_model <- glmer(resp ~ cond + (cond|journal), family = binomial, data = journal_data, control = glmerControl(optimizer="bobyqa", optCtrl = list(maxfun = 100000)))
     
-    p_values[i, 1] <- fe_model_fit$coefficients[2,4]
-    p_values[i, 2] <- re_int_model_fit$coefficients[2,4]
-    p_values[i, 3] <- re_slope_model_fit$coefficients[2,4]
+    p_values[i, 1] <- summary(fe_model)$coefficients[2,4]
+    p_values[i, 2] <- summary(re_int_model)$coefficients[2,4]
+    p_values[i, 3] <- summary(re_slope_model)$coefficients[2,4]
+    
+    singularity[i, 1] <- isSingular(re_int_model)
+    singularity[i, 2] <- isSingular(re_slope_model)
   }
   power_femodel <- sum(p_values[,1] <= .05)/nsims
   power_reint <- sum(p_values[,2] <= .05)/nsims
   power_reslope <- sum(p_values[,3] <= .05)/nsims
   
-  return(p_values)
+  return(cbind(p_values, singularity))
 }
 
-p_values <- glmm_power_sim(15, 30, 150, .125, .3, .04, .1)
+p_values <- glmm_power_sim(15, 8, 150, .125, .3, .05, .1)
 
 sum(p_values[,1] <= .05)/nrow(p_values)
 sum(p_values[,2] <= .05)/nrow(p_values)
@@ -69,3 +73,13 @@ sum(p_values[,3] <= .05)/nrow(p_values)
 
 plot_model(glmer(resp ~ cond + (1|journal), family = binomial, data = journal_data), terms = 'cond', type = 're')
   
+
+Bayes_Model_Multi_Intercept <- brm(resp ~ cond + (cond|journal),
+                                   data = journal_data, 
+                                   family = bernoulli(link = "logit"),
+                                   warmup = 500, 
+                                   iter = 2000, 
+                                   chains = 2, 
+                                   inits = "0", 
+                                   cores = 2,
+                                   seed = 123)
