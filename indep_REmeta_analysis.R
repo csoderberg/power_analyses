@@ -63,7 +63,7 @@ sim_function <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairw
   
   #generate starting dataframe
   simulation_df <- gen_sim_inputs(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairwise_comps, pval_criterion) %>%
-                      mutate(dif_corrs = max(unlist(true_pop_corrs)) - min(unlist(true_pop_corrs)))
+                    mutate(dif_corrs = map_dbl(true_pop_corrs, ~max(unlist(.)) - min(unlist(.))))
   
   #for each line, generate population correlations
   simulation_df <- simulation_df %>%
@@ -87,3 +87,10 @@ sim_function <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairw
   return(sim_results)
 }
 
+example_sim <- sim_function(all_corrs = list(c(.2, .3), c(.2, .4)), 
+                            all_corr_sds = .1, 
+                            n_per_dv = c(120, 150), 
+                            n_dvs = 24, 
+                            n_sims = 100, 
+                            pairwise_comps = list(c(1,2)), 
+                            pval_criterion = .05)
