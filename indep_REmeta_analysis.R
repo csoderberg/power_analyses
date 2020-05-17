@@ -65,6 +65,7 @@ sim_function <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairw
   simulation_df <- simulation_df %>%
                     mutate(sim_pop_corrs = pmap(list(true_pop_corrs, pop_corr_sds, n_dvs, n_per_dv), gen_corr_distribution))
   
+  # for each pop. correlation, generate data and calculate correlation in sample
   simulation_df <- simulation_df %>%
                      mutate(sim_pop_corrs = map(sim_pop_corrs, 
                                                 ~ mutate(.x, 
