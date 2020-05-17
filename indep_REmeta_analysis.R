@@ -35,7 +35,7 @@ gen_sim_inputs <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pai
                          pop_corr_sds = all_corr_sds,
                          n_per_dv = n_per_dv,
                          n_dvs = n_dvs, 
-                         n_sims = c(1:n_sims), 
+                         n_simulations = c(1:n_sims), 
                          pairwise_comps = pairwise_comps)
   return(sim_inputs)
 }
@@ -61,7 +61,8 @@ indep_ma_results <- function(corr_data, pairwise_comps) {
 sim_function <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairwise_comps) {
   
   #generate starting dataframe
-  simulation_df <- gen_sim_inputs(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairwise_comps)
+  simulation_df <- gen_sim_inputs(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairwise_comps) %>%
+                      mutate(dif_corrs = max(unlist(true_pop_corrs)) - min(unlist(true_pop_corrs)))
   
   #for each line, generate population correlations
   simulation_df <- simulation_df %>%
@@ -79,11 +80,9 @@ sim_function <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairw
                       unnest_wider(ma_result)
   
   sim_results <- simulation_df %>%
-                    group_by(true_pop_corrs, pop_corr_sds, n_per_dv, n_dvs, pairwise_comps) %>%
+                    group_by(dif_corrs, pop_corr_sds, n_per_dv, n_dvs) %>%
                     summarize(power = sum(p_val <= .05)/n_sims)
   
   return(sim_results)
 }
-
-simulation_df <- gen_sim_inputs(all_corrs = list(c(.2, .5)), all_corr_sds = .1, n_per_dv = 120, n_dvs = 4, n_sims = 5, pairwise_comps = list(c(1, 2)))
 
