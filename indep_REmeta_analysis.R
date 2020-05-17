@@ -27,3 +27,11 @@ gen_corr_data <- function(corrs, n_per_dv) {
   return(sample_corr)
 }
 
+# function to generate simulation inputs
+gen_sim_inputs <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs) {
+  sim_inputs <- crossing(pop_corrs <- all_corrs,
+                         pop_corr_sds <- all_corr_sds,
+                         n_per_dv <- n_per_dv,
+                         n_dvs <- n_dvs)
+  return(sim_inputs)
+}
