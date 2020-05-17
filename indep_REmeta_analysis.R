@@ -30,13 +30,14 @@ gen_corr_data <- function(dv_corr, n_per_dv) {
 }
 
 # function to generate simulation inputs
-gen_sim_inputs <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairwise_comps) {
+gen_sim_inputs <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairwise_comps, pval_criterion) {
   sim_inputs <- crossing(true_pop_corrs = all_corrs,
                          pop_corr_sds = all_corr_sds,
                          n_per_dv = n_per_dv,
                          n_dvs = n_dvs, 
                          n_simulations = c(1:n_sims), 
-                         pairwise_comps = pairwise_comps)
+                         pairwise_comps = pairwise_comps, 
+                         pval_criterion = pval_criterion)
   return(sim_inputs)
 }
 
@@ -58,10 +59,10 @@ indep_ma_results <- function(corr_data, pairwise_comps) {
 }
 
 # function to run simulations
-sim_function <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairwise_comps) {
+sim_function <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairwise_comps, pval_criterion) {
   
   #generate starting dataframe
-  simulation_df <- gen_sim_inputs(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairwise_comps) %>%
+  simulation_df <- gen_sim_inputs(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairwise_comps, pval_criterion) %>%
                       mutate(dif_corrs = max(unlist(true_pop_corrs)) - min(unlist(true_pop_corrs)))
   
   #for each line, generate population correlations
@@ -81,7 +82,7 @@ sim_function <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairw
   
   sim_results <- simulation_df %>%
                     group_by(dif_corrs, pop_corr_sds, n_per_dv, n_dvs) %>%
-                    summarize(power = sum(p_val <= .05)/n_sims)
+                    summarize(power = sum(p_val <= pval_criterion)/n_sims)
   
   return(sim_results)
 }
