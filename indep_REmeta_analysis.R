@@ -5,7 +5,7 @@ library(metafor)
 library(truncnorm)
 
 # function to generate population correlations assuming RE model
-gen_corr_distribution <- function(corrs, sd_corrs, n_dvs){
+gen_corr_distribution <- function(corrs, sd_corrs, n_dvs, n_per_dv){
   
   correlations <- c()  
   
@@ -14,23 +14,24 @@ gen_corr_distribution <- function(corrs, sd_corrs, n_dvs){
       correlations <- rbind(correlations, measure_correlation)
     }
   
-  pop_corrs <- as_tibble(correlations) %>%
+  sample_pop_corrs <- as_tibble(correlations) %>%
                     rename(conserv_measure = n_dvs + 1) %>%
-                    pivot_longer(cols = 1:n_dvs, names_to = 'dv', values_to = 'dv_corr')
+                    pivot_longer(cols = 1:n_dvs, names_to = 'dv', values_to = 'dv_corr') %>%
+                    mutate(n_per_dv = n_per_dv)
   
-  return(pop_corrs)
+  return(sample_pop_corrs)
 }
 
 # function to generate sample correlations from RE population correlation
-gen_corr_data <- function(corrs, n_per_dv) {
-  data <- mvrnorm(n = n_per_dv, mu = c(0, 0), Sigma = matrix(c(1, corrs, corrs, 1), nrow = 2))
+gen_corr_data <- function(dv_corr, n_per_dv) {
+  data <- mvrnorm(n = n_per_dv, mu = c(0, 0), Sigma = matrix(c(1, dv_corr, dv_corr, 1), nrow = 2))
   sample_corr <- cor(data[,1], data[,2])
   return(sample_corr)
 }
 
 # function to generate simulation inputs
 gen_sim_inputs <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims) {
-  sim_inputs <- crossing(pop_corrs = all_corrs,
+  sim_inputs <- crossing(true_pop_corrs = all_corrs,
                          pop_corr_sds = all_corr_sds,
                          n_per_dv = n_per_dv,
                          n_dvs = n_dvs, 
@@ -62,7 +63,15 @@ sim_function <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairw
   
   #for each line, generate population correlations
   simulation_df <- simulation_df %>%
-                    mutate(pop_corrs = pmap(list(all_corrs, all_corr_sds, n_dvs), gen_corr_distribution))
+                    mutate(sim_pop_corrs = pmap(list(true_pop_corrs, pop_corr_sds, n_dvs, n_per_dv), gen_corr_distribution))
   
+  simulation_df <- simulation_df %>%
+                     mutate(sim_pop_corrs = map(sim_pop_corrs, 
+                                                ~ mutate(.x, 
+                                                        sample_corr = pmap_dbl(list(dv_corr, n_per_dv), gen_corr_data))))
+  
+  return(simulation_df)
 }
+
+simulation_df <- gen_sim_inputs(all_corrs = list(c(.2, .5)), all_corr_sds = .1, n_per_dv = 120, n_dvs = 4, n_sims = 1)
 
