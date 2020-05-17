@@ -52,3 +52,16 @@ indep_ma_results <- function(corr_data, pairwise_comps) {
   
   return(model$QM, model$zval[2], model$pval[2])
 }
+
+# function to run simulations
+sim_function <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairwise_comps) {
+  
+  #generate starting dataframe
+  simulation_df <- gen_sim_inputs(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims)
+  
+  #for each line, generate population correlations
+  simulation_df <- simulation_df %>%
+                    mutate(pop_corrs = pmap(list(all_corrs, all_corr_sds, n_dvs), gen_corr_distribution))
+  
+}
+
