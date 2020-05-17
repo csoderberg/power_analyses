@@ -2,6 +2,7 @@
 library(MASS)
 library(tidyverse)
 library(metafor)
+library(truncnorm)
 
 # function to generate population correlations assuming RE model
 gen_corr_distribution <- function(corrs, sd_corrs, n_dvs){
@@ -9,7 +10,7 @@ gen_corr_distribution <- function(corrs, sd_corrs, n_dvs){
   correlations <- c()  
   
     for (i in 1:length(corrs)) {
-      measure_correlation <- c(rnorm(n = n_dvs, mean = corrs[i], sd = sd_corrs), i)
+      measure_correlation <- c(rtruncnorm(n = n_dvs, mean = corrs[i], sd = sd_corrs, a = -1, b = 1), i)
       correlations <- rbind(correlations, measure_correlation)
     }
   
