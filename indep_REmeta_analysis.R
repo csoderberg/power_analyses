@@ -3,6 +3,7 @@ library(MASS)
 library(tidyverse)
 library(metafor)
 
+# function to generate population correlations assuming RE model
 gen_corr_distribution <- function(corrs, sd_corrs, n_dvs){
   
   correlations <- c()  
@@ -19,7 +20,10 @@ gen_corr_distribution <- function(corrs, sd_corrs, n_dvs){
   return(correlations)
 }
 
+# function to generate sample correlations from RE population correlation
 gen_corr_data <- function(corrs, n_per_dv) {
   data <- mvrnorm(n = n_per_dv, mu = c(0, 0), Sigma = matrix(c(1, corrs, corrs, 1), nrow = 2))
   sample_corr <- cor(data[,1], data[,2])
+  return(sample_corr)
 }
+
