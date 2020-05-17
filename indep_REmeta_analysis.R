@@ -13,11 +13,11 @@ gen_corr_distribution <- function(corrs, sd_corrs, n_dvs){
       correlations <- rbind(correlations, measure_correlation)
     }
   
-  correlations <- as_tibble(correlations) %>%
+  pop_corrs <- as_tibble(correlations) %>%
                     rename(conserv_measure = n_dvs + 1) %>%
                     pivot_longer(cols = 1:n_dvs, names_to = 'dv', values_to = 'dv_corr')
   
-  return(correlations)
+  return(pop_corrs)
 }
 
 # function to generate sample correlations from RE population correlation
