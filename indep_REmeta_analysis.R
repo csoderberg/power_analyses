@@ -30,12 +30,13 @@ gen_corr_data <- function(dv_corr, n_per_dv) {
 }
 
 # function to generate simulation inputs
-gen_sim_inputs <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims) {
+gen_sim_inputs <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairwise_comps) {
   sim_inputs <- crossing(true_pop_corrs = all_corrs,
                          pop_corr_sds = all_corr_sds,
                          n_per_dv = n_per_dv,
                          n_dvs = n_dvs, 
-                         n_sims = n_sims)
+                         n_sims = n_sims, 
+                         pairwise_comps = pairwise_comps)
   return(sim_inputs)
 }
 
@@ -60,7 +61,7 @@ indep_ma_results <- function(corr_data, pairwise_comps) {
 sim_function <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairwise_comps) {
   
   #generate starting dataframe
-  simulation_df <- gen_sim_inputs(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims)
+  simulation_df <- gen_sim_inputs(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairwise_comps)
   
   #for each line, generate population correlations
   simulation_df <- simulation_df %>%
