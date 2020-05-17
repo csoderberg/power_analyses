@@ -42,17 +42,18 @@ gen_sim_inputs <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims) {
 # function to run indepedent meta-analyses for specified pairwise_comps
 indep_ma_results <- function(corr_data, pairwise_comps) {
   data <- escalc(measure = 'COR', ri = sample_corr, ni = n_per_dv, data = corr_data) %>%
-            filter(conserv_measure == pairwise_comps[1] | conserv_measure == pairwise_comps[2])
+            filter(conserv_measure == pairwise_comps[[1]] | conserv_measure == pairwise_comps[[2]])
   
-  res1 <- rma(yi, vi, data=data, subset=conserv_measure==pairwise_comps[1])
-  res2 <- rma(yi, vi, data=data, subset=conserv_measure==pairwise_comps[2])
+  res1 <- rma(yi, vi, data=data, subset=conserv_measure==pairwise_comps[[1]])
+  res2 <- rma(yi, vi, data=data, subset=conserv_measure==pairwise_comps[[2]])
   
   data_comp <- data.frame(estimate = c(coef(res1), coef(res2)), stderror = c(res1$se, res2$se),
-                         meta = c(pairwise_comps[1],pairwise_comps[2]), tau2 = round(c(res1$tau2, res2$tau2),3))
+                         meta = c(pairwise_comps[[1]],pairwise_comps[[2]]), tau2 = round(c(res1$tau2, res2$tau2),3))
   
   model <- rma(estimate, sei=stderror, mods = ~ meta, method="FE", data=data_comp, digits=3)
   
-  return(model$QM, model$zval[2], model$pval[2])
+  return(set_names(c(model$QM, model$zval[2], model$pval[2]), c('qm_val', 'z_val', 'p_val')))
+  
 }
 
 # function to run simulations
@@ -73,6 +74,9 @@ sim_function <- function(all_corrs, all_corr_sds, n_per_dv, n_dvs, n_sims, pairw
                      mutate(sim_pop_corrs = map(sim_pop_corrs, 
                                                 ~ mutate(.x, 
                                                         sample_corr = pmap_dbl(list(dv_corr, n_per_dv), gen_corr_data))))
+  
+  simulation_df <- simulation_df %>%
+                      mutate(ma_result = pmap(list(sim_pop_corrs), indep_ma_results()))
   
   return(simulation_df)
 }
